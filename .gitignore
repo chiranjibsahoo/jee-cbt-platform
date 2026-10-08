@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+dist/
+.env
+*.db
+*.db-journal
+
+# Prisma generated
+apps/api/node_modules/
+apps/web/node_modules/
+
+# Build output
+apps/web/dist/
+apps/api/dist/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Local env files
+.env.local
+.env.*.local

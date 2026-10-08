@@ -1,0 +1,71 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * { box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    @apply bg-gray-50 text-gray-900 dark:bg-gray-950 dark:text-gray-100 transition-colors duration-200;
+  }
+
+  .katex-display {
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 4px 0;
+  }
+}
+
+@layer components {
+  /* Dark palette button states */
+  .palette-btn {
+    @apply w-9 h-9 rounded-lg text-xs font-bold flex items-center justify-center cursor-pointer transition-all duration-150 border;
+  }
+  .palette-btn-not-visited {
+    @apply bg-gray-700 text-gray-400 border-gray-600 hover:border-gray-400 hover:text-gray-200;
+  }
+  .palette-btn-not-answered {
+    @apply bg-red-900 text-red-300 border-red-700 hover:border-red-500;
+  }
+  .palette-btn-answered {
+    @apply bg-emerald-600 text-white border-emerald-500 hover:bg-emerald-500;
+  }
+  .palette-btn-marked {
+    @apply bg-violet-600 text-white border-violet-500 hover:bg-violet-500;
+  }
+  .palette-btn-answered-marked {
+    @apply text-white border-emerald-400;
+    background-image: linear-gradient(135deg, #7c3aed 50%, #059669 50%);
+  }
+  .palette-btn-current {
+    @apply ring-2 ring-orange-400 ring-offset-1 ring-offset-gray-900 scale-110 z-10 relative;
+  }
+  .palette-btn-dimmed {
+    @apply opacity-25 pointer-events-none;
+  }
+
+  /* Exam button */
+  .exam-btn {
+    @apply px-4 py-2.5 rounded-lg font-bold text-sm transition-all focus:outline-none;
+  }
+  .exam-btn-outline {
+    @apply bg-gray-700 text-gray-200 border border-gray-600 hover:bg-gray-600;
+  }
+
+  /* Timer states */
+  .timer-normal  { @apply text-emerald-400; }
+  .timer-warning { @apply text-amber-400; }
+  .timer-danger  { @apply text-orange-400; }
+  .timer-critical { @apply text-red-400 animate-pulse; }
+}
+
+/* Dark scrollbars */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: #1f2937; }
+::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #6b7280; }
+
+@media print {
+  .no-print { display: none; }
+}

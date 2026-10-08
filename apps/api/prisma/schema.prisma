@@ -1,0 +1,283 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ===================== USER =====================
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  role         String   @default("STUDENT") // UserRole
+  avatar       String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  attempts     ExamAttempt[]
+  bookmarks    Bookmark[]
+  mistakes     Mistake[]
+  snapshots    PerformanceSnapshot[]
+
+  @@map("users")
+}
+
+// ===================== EXAM =====================
+model Exam {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  examType    String   // ExamType
+  mode        String   @default("FULL_TEST") // ExamMode
+  duration    Int      // minutes
+  totalMarks  Int      @default(0)
+  isPublished Boolean  @default(false)
+  isDemo      Boolean  @default(false)
+  year        Int?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  sections    ExamSection[]
+  attempts    ExamAttempt[]
+  config      ExamConfig?
+
+  @@map("exams")
+}
+
+// ===================== EXAM CONFIG =====================
+model ExamConfig {
+  id                String   @id @default(cuid())
+  examId            String   @unique
+  correctMarks      Float    @default(4)
+  incorrectMarks    Float    @default(-1)
+  unansweredMarks   Float    @default(0)
+  partialMarking    Boolean  @default(false)
+  examSecurityMode  String   @default("practice")
+  allowCalculator   Boolean  @default(false)
+  shuffleQuestions  Boolean  @default(false)
+  shuffleOptions    Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  exam Exam @relation(fields: [examId], references: [id], onDelete: Cascade)
+
+  @@map("exam_configs")
+}
+
+// ===================== EXAM SECTION =====================
+model ExamSection {
+  id              String  @id @default(cuid())
+  examId          String
+  name            String
+  subject         String  // Subject
+  questionCount   Int     @default(0)
+  correctMarks    Float?
+  incorrectMarks  Float?
+  unansweredMarks Float?
+  order           Int     @default(0)
+
+  exam      Exam           @relation(fields: [examId], references: [id], onDelete: Cascade)
+  questions ExamQuestion[]
+
+  @@map("exam_sections")
+}
+
+// ===================== QUESTION =====================
+model Question {
+  id             String       @id @default(cuid())
+  examType       String?      // ExamType
+  subject        String       // Subject
+  chapter        String
+  topic          String?
+  questionType   String       // QuestionType
+  questionText   String
+  imageUrl       String?
+  difficulty     String       @default("MEDIUM") // Difficulty
+  correctMarks   Float        @default(4)
+  negativeMarks  Float        @default(-1)
+  source         String?
+  year           Int?
+  shift          String?
+  isPYQ          Boolean      @default(false)
+  solution       String?
+  explanation    String?
+  formulaUsed    String?
+  tags           String?      // JSON array stored as string
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  options        QuestionOption[]
+  examQuestions  ExamQuestion[]
+  bookmarks      Bookmark[]
+  mistakes       Mistake[]
+  attemptAnswers AttemptAnswer[]
+
+  @@map("questions")
+}
+
+// ===================== QUESTION OPTION =====================
+model QuestionOption {
+  id           String   @id @default(cuid())
+  questionId   String
+  optionLabel  String   // A, B, C, D
+  optionText   String
+  imageUrl     String?
+  isCorrect    Boolean  @default(false)
+  order        Int      @default(0)
+
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@map("question_options")
+}
+
+// ===================== EXAM QUESTION =====================
+model ExamQuestion {
+  id          String @id @default(cuid())
+  examId      String
+  sectionId   String
+  questionId  String
+  order       Int    @default(0)
+  customMarks Float?
+
+  section  ExamSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  question Question    @relation(fields: [questionId], references: [id])
+
+  @@unique([sectionId, questionId])
+  @@map("exam_questions")
+}
+
+// ===================== EXAM ATTEMPT =====================
+model ExamAttempt {
+  id              String        @id @default(cuid())
+  userId          String
+  examId          String
+  status          String        @default("IN_PROGRESS") // AttemptStatus
+  startTime       DateTime      @default(now())
+  endTime         DateTime?
+  submittedAt     DateTime?
+  timeAllowed     Int           // seconds
+  timeUsed        Int           @default(0)
+  currentQuestion Int           @default(0)
+  currentSubject  String        @default("PHYSICS") // Subject
+  totalScore      Float         @default(0)
+  maxScore        Float         @default(0)
+  correctCount    Int           @default(0)
+  incorrectCount  Int           @default(0)
+  unansweredCount Int           @default(0)
+  attemptNumber   Int           @default(1)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  user    User            @relation(fields: [userId], references: [id])
+  exam    Exam            @relation(fields: [examId], references: [id])
+  answers AttemptAnswer[]
+  events  AttemptEvent[]
+
+  @@map("exam_attempts")
+}
+
+// ===================== ATTEMPT ANSWER =====================
+model AttemptAnswer {
+  id              String         @id @default(cuid())
+  attemptId       String
+  questionId      String
+  questionIndex   Int
+  subject         String         // Subject
+  status          String         @default("NOT_VISITED") // QuestionStatus
+  selectedOptions String?        // JSON array of option labels
+  numericalAnswer Float?
+  isCorrect       Boolean?
+  marksAwarded    Float?
+  timeSpent       Int            @default(0) // seconds
+  visitCount      Int            @default(0)
+  firstVisitAt    DateTime?
+  lastAnsweredAt  DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  attempt  ExamAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question Question    @relation(fields: [questionId], references: [id])
+
+  @@unique([attemptId, questionId])
+  @@map("attempt_answers")
+}
+
+// ===================== ATTEMPT EVENT =====================
+model AttemptEvent {
+  id         String    @id @default(cuid())
+  attemptId  String
+  eventType  String
+  payload    String?   // JSON
+  timestamp  DateTime  @default(now())
+
+  attempt ExamAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+
+  @@map("attempt_events")
+}
+
+// ===================== BOOKMARK =====================
+model Bookmark {
+  id         String   @id @default(cuid())
+  userId     String
+  questionId String
+  note       String?
+  createdAt  DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id])
+  question Question @relation(fields: [questionId], references: [id])
+
+  @@unique([userId, questionId])
+  @@map("bookmarks")
+}
+
+// ===================== MISTAKE =====================
+model Mistake {
+  id            String        @id @default(cuid())
+  userId        String
+  questionId    String
+  attemptId     String?
+  mistakeType   String        // MistakeType
+  note          String?
+  isResolved    Boolean       @default(false)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  user     User     @relation(fields: [userId], references: [id])
+  question Question @relation(fields: [questionId], references: [id])
+
+  @@map("mistakes")
+}
+
+// ===================== PERFORMANCE SNAPSHOT =====================
+model PerformanceSnapshot {
+  id              String   @id @default(cuid())
+  userId          String
+  attemptId       String
+  examTitle       String
+  examType        String   // ExamType
+  totalScore      Float
+  maxScore        Float
+  percentage      Float
+  accuracy        Float
+  attemptRate     Float
+  correctCount    Int
+  incorrectCount  Int
+  unansweredCount Int
+  timeUsed        Int
+  physicsScore    Float?
+  chemistryScore  Float?
+  mathScore       Float?
+  createdAt       DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("performance_snapshots")
+}
