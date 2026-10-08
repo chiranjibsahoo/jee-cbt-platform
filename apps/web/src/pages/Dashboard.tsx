@@ -65,7 +65,7 @@ export default function Dashboard() {
             <div className="h-6 w-px bg-gray-200 dark:bg-gray-800"></div>
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm shadow-md">
-                {user?.name?.charAt(0).toUpperCase()}
+                {(user?.name || 'S').charAt(0).toUpperCase()}
               </div>
               <span className="hidden sm:block text-sm font-semibold text-gray-700 dark:text-gray-300">
                 {user?.name}

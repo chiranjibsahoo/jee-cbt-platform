@@ -27,6 +27,11 @@ export const useAuthStore = create<AuthState>()(
         try {
           const res = await authApi.login({ email, password });
           const { user, token } = res.data;
+          
+          if (!token || !user) {
+            throw new Error('Invalid response from server. Backend API might be unreachable.');
+          }
+          
           localStorage.setItem('jee_token', token);
           localStorage.setItem('jee_user', JSON.stringify(user));
           set({ user, token, isAuthenticated: true, isLoading: false });
